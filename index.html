@@ -22,6 +22,13 @@
         box-sizing: border-box;
         backdrop-filter: blur(10px);
       }
+      #username-input {
+        border: none;
+        padding: 0 1rem;
+        border-radius: 2rem;
+        margin: 0.25rem;
+      }
+
       #input {
         border: none;
         padding: 0 1rem;
@@ -57,8 +64,10 @@
   </head>
   <body>
     <ul id="messages"></ul>
+    <p id="status"></p>
     <form id="form" action="">
-      <input id="input" autocomplete="off" />
+      <input id="username-input" placeholder="username" autocomplete="off" />
+      <input id="input" placeholder="message" autocomplete="off" />
       <button>Send</button>
     </form>
 
@@ -68,18 +77,39 @@
 
       let form = document.getElementById("form")
       let input = document.getElementById("input")
+      let status = document.getElementById("status")
+      let usernameInput = document.getElementById("username-input")
 
       form.addEventListener("submit", function (e) {
         e.preventDefault()
         if (input.value) {
-          socket.emit("chat message", input.value)
+          socket.emit("chat message", input.value, usernameInput.value)
           input.value = ""
         }
       })
 
-      socket.on("chat message", function (msg) {
+      input.addEventListener("keypress", function (e) {
+        if (usernameInput.value) {
+          socket.emit("USER_IS_TYPING", usernameInput.value)
+        }
+      })
+
+      socket.on("chat message", function (msg, username) {
         let item = document.createElement("li")
-        item.textContent = msg
+        item.textContent = `${username}: ${msg}`
+        messages.appendChild(item)
+        window.scrollTo(0, document.body.scrollHeight)
+      })
+
+      socket.on("USER_IS_TYPING", function (username) {
+        if (username) {
+          status.innerText = `${username} is typing`
+        }
+      })
+
+      socket.on("WELCOME_USER", function () {
+        let item = document.createElement("li")
+        item.textContent = `New user has joined`
         messages.appendChild(item)
         window.scrollTo(0, document.body.scrollHeight)
       })
